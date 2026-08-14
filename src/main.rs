@@ -1,8 +1,9 @@
 use neg_c::lexer::tokenize;
 
 fn main() {
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input).unwrap();
-
-    println!("{:?}", tokenize(&input).unwrap());
+    let input = std::fs::read_to_string("test.nc").unwrap();
+    match tokenize(&input) {
+        Ok(t) => t.iter().for_each(|t| print!("{:?}, ", t.token)),
+        Err(e) => e.iter().for_each(|e| e.report("test.nc")),
+    }
 }
