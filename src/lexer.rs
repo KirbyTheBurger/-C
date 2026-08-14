@@ -1,5 +1,7 @@
 use logos::Logos;
 
+use crate::error::Error;
+
 #[derive(Logos, Debug, Clone)]
 #[logos(skip r"[ \t\r\n\f]+")]
 pub enum Token {
@@ -11,9 +13,28 @@ pub enum Token {
     Number(u16),
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>, ()> {
-    let lexer = Token::lexer(source);
-    lexer.collect()
+#[derive(Debug)]
+pub struct  SpannedToken {
+    pub token: Token,
+    pub span: std::ops::Range<usize>,
+}
+
+pub fn tokenize(source: &str) -> Result<Vec<SpannedToken>, Vec<Error>> {
+    let mut tokens = vec![];
+    let mut errors = vec![];
+
+    for (result, span) in Token::lexer(source).spanned() {
+        match result {
+            Ok(token) => tokens.push(SpannedToken { token, span }),
+            Err(_) => errors.push(Error::new("Unexpected character(s)", span)),
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(tokens)
+    } else {
+        Err(errors)
+    }
 }
 
 fn parse_num(lex: &mut logos::Lexer<Token>) -> Option<u16> {
@@ -24,6 +45,5 @@ fn parse_num(lex: &mut logos::Lexer<Token>) -> Option<u16> {
         _ => (10, false),
     };
     if discard { slice = &slice[2..] };
-    println!("parsing {slice} with base {base}");
     u16::from_str_radix(slice, base).ok()
 }
