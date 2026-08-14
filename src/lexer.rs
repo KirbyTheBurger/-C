@@ -3,9 +3,6 @@ use logos::Logos;
 #[derive(Logos, Debug, Clone)]
 #[logos(skip r"[ \t\r\n\f]+")]
 pub enum Token {
-    #[token("let")] Let,
-    #[token("=")] Equal,
-    #[token(";")] Semicolon,
     #[token("print")] Print,
 
     #[regex("[a-zA-Z_]+", |lex| lex.slice().to_string())]
