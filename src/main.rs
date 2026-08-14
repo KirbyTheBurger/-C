@@ -1,3 +1,8 @@
+use neg_c::lexer::tokenize;
+
 fn main() {
-    println!("Hello, world!");
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+
+    println!("{:?}", tokenize(&input).unwrap());
 }
