@@ -1,4 +1,6 @@
-#[derive(logos::Logos)]
+use logos::Logos;
+
+#[derive(Logos)]
 #[logos(skip r"[ \t\r\n\f]+")]
 pub enum Token {
     #[token("let")] Let,
@@ -9,6 +11,11 @@ pub enum Token {
     Identifier(String),
     #[regex("(0(x|X)[0-9a-fA-F]+|0(b|B)[01]+|[0-9]+)", |lex| parse_num(lex))]
     Number(u16),
+}
+
+pub fn tokenize(source: &str) -> Result<Vec<Token>, ()> {
+    let lexer = Token::lexer(source);
+    lexer.collect()
 }
 
 fn parse_num(lex: &mut logos::Lexer<Token>) -> Option<u16> {
