@@ -39,10 +39,14 @@ pub fn tokenize(source: &str) -> Result<Vec<SpannedToken>, Vec<Error>> {
 
 fn parse_num(lex: &mut logos::Lexer<Token>) -> Option<u16> {
     let mut slice = lex.slice();
-    let (base, discard) = match &lex.slice()[0..2] {
-        "0x" => (16, true),
-        "0b" => (2, true),
-        _ => (10, false),
+    let (base, discard) = if slice.len() <= 2 {
+        (10, false)
+    } else {
+        match &lex.slice()[0..2] {
+            "0x" => (16, true),
+            "0b" => (2, true),
+            _ => (10, false),
+        }
     };
     if discard { slice = &slice[2..] };
     u16::from_str_radix(slice, base).ok()
