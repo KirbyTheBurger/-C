@@ -1,6 +1,6 @@
 use logos::Logos;
 
-use crate::error::Error;
+use crate::{Spanned, error::Error};
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\r\n\f]+")]
@@ -13,19 +13,13 @@ pub enum Token {
     Number(u16),
 }
 
-#[derive(Debug, PartialEq)]
-pub struct  SpannedToken {
-    pub token: Token,
-    pub span: std::ops::Range<usize>,
-}
-
-pub fn tokenize(source: &str) -> Result<Vec<SpannedToken>, Vec<Error>> {
+pub fn tokenize(source: &str) -> Result<Vec<Spanned<Token>>, Vec<Error>> {
     let mut tokens = vec![];
     let mut errors = vec![];
 
     for (result, span) in Token::lexer(source).spanned() {
         match result {
-            Ok(token) => tokens.push(SpannedToken { token, span }),
+            Ok(token) => tokens.push(Spanned { element: token, span }),
             Err(_) => errors.push(Error::new("Unexpected character(s)", span)),
         }
     }
