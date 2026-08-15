@@ -2,7 +2,7 @@ pub mod lexer;
 pub mod error;
 pub mod parser;
 
-pub struct Shared<T> {
+pub struct Spanned<T> {
     element: T,
     span: std::ops::Range<usize>,
 }
