@@ -4,12 +4,13 @@ use crate::{Spanned, error::Error, lexer::Token};
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-
+    Print(Box<Spanned<Expression>>),
+    Expression(Box<Spanned<Expression>>),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-
+    Number(u16),
 }
 
 pub struct Parser {
@@ -34,6 +35,7 @@ impl Parser {
                 Ok(s) => statements.push(s),
                 Err(e) => errors.push(e),
             }
+            self.advance();
         }
 
         if errors.is_empty() {
@@ -44,15 +46,35 @@ impl Parser {
     }
 
     fn parse_statement(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Statement>, Error> {
-        match current {
-            _ => todo!(),
-        }
+        let span_start = current.span.start;
+
+        let statement = match current.element {
+            Token::Print => Statement::Print(Box::new(self.parse_expression(current)?)),
+            _ => Statement::Expression(Box::new(self.parse_expression(current)?)),
+        };
+
+        let span_end = self.current().unwrap().span.end;
+
+        Ok(Spanned {
+            element: statement,
+            span: span_start..span_end,
+        })
     }
 
     fn parse_expression(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Expression>, Error> {
-        match current {
+        let span_start = current.span.start;
+
+        let expression = match current.element {
+            Token::Number(n) => Expression::Number(n),
             _ => todo!(),
-        }
+        };
+
+        let span_end = self.current().unwrap().span.end;
+
+        Ok(Spanned {
+            element: expression,
+            span: span_start..span_end,
+        })
     }
 
     fn advance(&mut self) {
