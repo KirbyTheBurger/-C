@@ -8,6 +8,7 @@ fn main() {
     let tokens = match tokenize(&input) {
         Ok(t) => {
             t.iter().for_each(|t| print!("{:?}, ", t.element));
+            print!("\n");
             t
         },
         Err(e) => {
@@ -19,6 +20,7 @@ fn main() {
     let _statements = match Parser::new(tokens).parse() {
         Ok(s) => {
             s.iter().for_each(|s| print!("{:?}, ", s.element));
+            print!("\n");
             s
         },
         Err(e) => {
