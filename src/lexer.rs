@@ -2,7 +2,7 @@ use logos::Logos;
 
 use crate::error::Error;
 
-#[derive(Logos, Debug, Clone)]
+#[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\r\n\f]+")]
 pub enum Token {
     #[token("print")] Print,
@@ -13,7 +13,7 @@ pub enum Token {
     Number(u16),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct  SpannedToken {
     pub token: Token,
     pub span: std::ops::Range<usize>,
