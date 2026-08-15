@@ -35,7 +35,6 @@ impl Parser {
                 Ok(s) => statements.push(s),
                 Err(e) => errors.push(e),
             }
-            self.advance();
         }
 
         if errors.is_empty() {
@@ -49,16 +48,22 @@ impl Parser {
         let span_start = current.span.start;
 
         let statement = match current.element {
-            Token::Print => Statement::Print(Box::new(self.parse_expression(current)?)),
+            Token::Print => self.read_print()?,
             _ => Statement::Expression(Box::new(self.parse_expression(current)?)),
         };
 
-        let span_end = self.current().unwrap().span.end;
+        let span_end = self.previous().span.end;
 
         Ok(Spanned {
             element: statement,
             span: span_start..span_end,
         })
+    }
+
+    fn read_print(&mut self) -> Result<Statement, Error> {
+        let current = self.expect_some("after `print`")?;
+        self.advance();
+        Ok(Statement::Print(Box::new(self.parse_expression(current)?)))
     }
 
     fn parse_expression(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Expression>, Error> {
@@ -70,11 +75,17 @@ impl Parser {
         };
 
         let span_end = self.current().unwrap().span.end;
+        self.advance();
 
         Ok(Spanned {
             element: expression,
             span: span_start..span_end,
         })
+    }
+
+    /// Assumes previous token isn't `None`
+    fn previous(&mut self) -> Rc<Spanned<Token>> {
+        self.tokens[self.pos - 1].clone()
     }
 
     fn advance(&mut self) {
@@ -90,7 +101,21 @@ impl Parser {
     }
 
     /// This function doesn't advance and assumes the current token isn't `None`
-    fn expect(&mut self, expected: Token, context: &str) -> Result<Rc<Spanned<Token>>, Error> {
+    fn expect_some(&self, context: &str) -> Result<Rc<Spanned<Token>>, Error> {
+        match self.peek() {
+            Some(t) => Ok(t),
+            None => {
+                let current = self.current().unwrap();
+                Err(Error::new(format!(
+                    "Expected something `{}`, got EOF",
+                    context
+                ), current.span.end..current.span.end))
+            }
+        }
+    }
+
+    /// This function doesn't advance and assumes the current token isn't `None`
+    fn expect(&self, expected: Token, context: &str) -> Result<Rc<Spanned<Token>>, Error> {
         match self.peek() {
             Some(t) => {
                 if t.element == expected {
