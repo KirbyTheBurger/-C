@@ -19,8 +19,7 @@ fn main() {
 
     let _statements = match Parser::new(tokens).parse() {
         Ok(s) => {
-            s.iter().for_each(|s| print!("{:?}, ", s.element));
-            print!("\n");
+            s.iter().for_each(|s| println!("{:?}", s.element));
             s
         },
         Err(e) => {
