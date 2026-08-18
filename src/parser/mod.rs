@@ -2,6 +2,8 @@ use std::rc::Rc;
 
 use crate::{Spanned, error::Error, lexer::Token};
 
+mod tests;
+
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Print(Box<Spanned<Expression>>),
