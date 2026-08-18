@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Error {
     msg: String,
     span: std::ops::Range<usize>,
