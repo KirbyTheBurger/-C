@@ -33,9 +33,15 @@ impl Parser {
         let mut errors = vec![];
 
         while let Some(t) = self.current() {
+            let pos_before = self.pos;
             match self.parse_statement(t) {
                 Ok(s) => statements.push(s),
-                Err(e) => errors.push(e),
+                Err(e) => {
+                    errors.push(e);
+                    if self.pos == pos_before {
+                        self.advance();
+                    }
+                },
             }
         }
 
