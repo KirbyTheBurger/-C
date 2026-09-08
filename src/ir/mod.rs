@@ -1,6 +1,7 @@
 use crate::Spanned;
 
 pub mod builder;
+mod tests;
 
 pub type VReg = usize;
 
