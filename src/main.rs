@@ -30,7 +30,7 @@ fn main() {
 
     let _ir = match IRBuilder::new(statements).build() {
         Ok(i) => {
-            i.iter().for_each(|i| println!("{:?}", i));
+            i.iter().for_each(|i| println!("{:?}", i.element));
         },
         Err(e) => {
             e.iter().for_each(|e| e.report(PATH));

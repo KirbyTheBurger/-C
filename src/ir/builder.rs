@@ -17,7 +17,7 @@ impl IRBuilder {
         }
     }
 
-    pub fn build(&mut self) -> Result<Vec<Instr>, Vec<Error>> {
+    pub fn build(&mut self) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
         let mut instructions = vec![];
         let mut errors = vec![];
 
@@ -36,12 +36,14 @@ impl IRBuilder {
         }
     }
 
-    fn eval_statement(&mut self, statement: Rc<Spanned<Statement>>) -> Result<Vec<Instr>, Vec<Error>> {
+    fn eval_statement(&mut self, statement: Rc<Spanned<Statement>>) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+        let span = statement.span.clone();
+        
         match &statement.element {
             Statement::Print(e) => {
                 let dest = self.get_reg();
                 let mut v = self.eval_expression(e, dest)?;
-                v.push(Instr::Print(dest));
+                v.push(Instr::Print(dest).with_span(span));
                 Ok(v)
             },
             Statement::Expression(e) => {
@@ -51,9 +53,11 @@ impl IRBuilder {
         }
     }
 
-    fn eval_expression(&mut self, expression: &Spanned<Expression>, dest: VReg) -> Result<Vec<Instr>, Vec<Error>> {
+    fn eval_expression(&mut self, expression: &Spanned<Expression>, dest: VReg) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+        let span = expression.span.clone();
+
         match expression.element {
-            Expression::Number(n) => Ok(vec![Instr::LoadImm(dest, n)]),
+            Expression::Number(n) => Ok(vec![Instr::LoadImm(dest, n).with_span(span)]),
         }
     }
 
