@@ -5,7 +5,7 @@ use crate::{Spanned, error::Error, ir::{Instr, VReg}, parser::{Expression, State
 pub struct IRBuilder {
     input: Vec<Rc<Spanned<Statement>>>,
     pos: usize,
-    next_reg: usize,
+    next_reg: VReg,
 }
 
 impl IRBuilder {
@@ -37,11 +37,24 @@ impl IRBuilder {
     }
 
     fn eval_statement(&mut self, statement: Rc<Spanned<Statement>>) -> Result<Vec<Instr>, Vec<Error>> {
-        todo!()
+        match &statement.element {
+            Statement::Print(e) => {
+                let dest = self.get_reg();
+                let mut v = self.eval_expression(e, dest)?;
+                v.push(Instr::Print(dest));
+                Ok(v)
+            },
+            Statement::Expression(e) => {
+                let dest = self.get_reg();
+                self.eval_expression(e, dest)
+            },
+        }
     }
 
-    fn eval_expression(&mut self, expression: Spanned<Expression>, dest: VReg) -> Result<Vec<Instr>, Vec<Error>> {
-        todo!()
+    fn eval_expression(&mut self, expression: &Spanned<Expression>, dest: VReg) -> Result<Vec<Instr>, Vec<Error>> {
+        match expression.element {
+            Expression::Number(n) => Ok(vec![Instr::LoadImm(dest, n)]),
+        }
     }
 
     fn advance(&mut self) {
@@ -50,5 +63,10 @@ impl IRBuilder {
 
     fn current(&self) -> Option<Rc<Spanned<Statement>>> {
         self.input.get(self.pos).cloned()
+    }
+
+    fn get_reg(&mut self) -> VReg {
+        self.next_reg += 1;
+        self.next_reg - 1
     }
 }
