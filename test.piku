@@ -1,2 +1,2 @@
-LD r6, 65
-OUT r6
+LD r0, 65
+OUT r0

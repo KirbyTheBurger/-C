@@ -122,6 +122,7 @@ impl Parser {
         }
     }
 
+    #[allow(unused)]
     /// This function doesn't advance and assumes the current token isn't `None`
     fn expect(&self, expected: Token, context: &str) -> Result<Rc<Spanned<Token>>, Error> {
         match self.peek() {
