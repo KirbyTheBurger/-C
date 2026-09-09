@@ -38,11 +38,11 @@ impl Writer {
         match instruction.element {
             Instr::LoadImm(vreg, n) => {
                 let reg = self.get_reg(vreg).expect("no free regs");
-                self.write(format!("LD {reg}, {n}"));
+                self.write(format!("LD r{reg}, {n}"));
             },
             Instr::Print(vreg) => {
                 let reg = self.get_reg(vreg).expect("no free regs");
-                self.write(format!("OUT {reg}"));
+                self.write(format!("OUT r{reg}"));
                 self.free_reg(reg);
             }
         }
