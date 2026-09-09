@@ -45,7 +45,6 @@ impl Writer {
                 self.write(format!("OUT {reg}"));
                 self.free_reg(reg);
             }
-            _ => todo!()
         }
     }
 
