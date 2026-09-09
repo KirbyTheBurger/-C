@@ -29,7 +29,9 @@ pub fn compile(src: String, file: String, debug: bool) -> Option<String> {
 
     let statements = match Parser::new(tokens).parse() {
         Ok(s) => {
-            s.iter().for_each(|s| println!("{:?}", s.element));
+            if debug {
+                s.iter().for_each(|s| println!("{:?}", s.element));
+            }
             s
         },
         Err(e) => {
@@ -40,7 +42,9 @@ pub fn compile(src: String, file: String, debug: bool) -> Option<String> {
 
     let ir = match IRBuilder::new(statements).build() {
         Ok(i) => {
-            i.iter().for_each(|i| println!("{:?}", i.element));
+            if debug {
+                i.iter().for_each(|i| println!("{:?}", i.element));
+            }
             i
         },
         Err(e) => {
