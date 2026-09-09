@@ -1,2 +1,2 @@
-LD 4, 3
-OUT 4
+LD r1, 3
+OUT r1
