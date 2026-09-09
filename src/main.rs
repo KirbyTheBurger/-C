@@ -41,6 +41,7 @@ fn main() {
                 Ok(s) => s,
                 Err(_) => return,
             };
+            println!("{compiled_file}");
 
             let src = match fs::read_to_string(compiled_file) {
                 Ok(s) => s,
@@ -59,7 +60,7 @@ fn main() {
 /// Compile a .nc file into a .piku file.
 /// Will return Err(()) if encountering an error and exiting early.
 /// Will return Ok() with the name of compiled .piku file.
-fn compile_file(file: &String, debug: bool) -> Result<&str, ()> {
+fn compile_file(file: &String, debug: bool) -> Result<String, ()> {
     let src = match fs::read_to_string(file) {
         Ok(s) => s,
         Err(e) => {
@@ -77,13 +78,13 @@ fn compile_file(file: &String, debug: bool) -> Result<&str, ()> {
     };
 
     let new_file = match get_file_name(file) {
-        Some(s) => s,
+        Some(s) => format!("{s}.piku"),
         None => {
             println!("Supplied file is not a .nc file");
             return Err(());
         }
     };
-    if let Err(e) = fs::write(format!("{new_file}.piku"), asm) {
+    if let Err(e) = fs::write(&new_file, asm) {
         println!("Failed to write file: {e}")
     }
 
