@@ -1,44 +1,99 @@
-const PATH: &str = "test.nc";
+use std::fs;
 
-use neg_c::{ir::builder::IRBuilder, lexer::tokenize, parser::Parser, writer::Writer};
+use clap::Parser;
+use neg_c::compile;
+
+#[derive(clap::Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(clap::Subcommand)]
+enum Commands {
+    /// compile a .nc file to a .piku file
+    Build {
+        /// the .nc file to compile
+        file: String,
+        /// print optional debug info
+        #[arg(short, long)]
+        debug: bool,
+    },
+    /// compile and run a .nc file
+    Run {
+        /// the .nc file to run
+        file: String,
+        /// print optional debug info
+        #[arg(short, long)]
+        debug: bool,
+    }
+}
 
 fn main() {
-    let input = std::fs::read_to_string(PATH).unwrap();
+    let cli = Cli::parse();
 
-    let tokens = match tokenize(&input) {
-        Ok(t) => {
-            t.iter().for_each(|t| print!("{:?}, ", t.element));
-            print!("\n");
-            t
+    match &cli.command {
+        Commands::Build { file, debug } => {
+            let _ = compile_file(file, *debug);
         },
+        Commands::Run { file, debug } => {
+            let compiled_file = match compile_file(file, *debug) {
+                Ok(s) => s,
+                Err(_) => return,
+            };
+
+            let src = match fs::read_to_string(compiled_file) {
+                Ok(s) => s,
+                Err(e) => {
+                    println!("Failed to read file: {e}");
+                    return;
+                },
+            };
+            if let Err(e) = piku::run(src) {
+                println!("The program encountered an error during runtime: {e}");
+            }
+        },
+    }
+}
+
+/// Compile a .nc file into a .piku file.
+/// Will return Err(()) if encountering an error and exiting early.
+/// Will return Ok() with the name of compiled .piku file.
+fn compile_file(file: &String, debug: bool) -> Result<&str, ()> {
+    let src = match fs::read_to_string(file) {
+        Ok(s) => s,
         Err(e) => {
-            e.iter().for_each(|e| e.report(PATH));
-            return;
+            println!("Failed to read file: {e}");
+            return Err(());
         },
     };
 
-    let statements = match Parser::new(tokens).parse() {
-        Ok(s) => {
-            s.iter().for_each(|s| println!("{:?}", s.element));
-            s
+    let asm = match compile(src, file.clone(), debug) {
+        Some(s) => s,
+        None => {
+            println!("Error(s) occured, aborting compilation...");
+            return Err(());
         },
-        Err(e) => {
-            e.iter().for_each(|e| e.report(PATH));
-            return;
+    };
+
+    let new_file = match get_file_name(file) {
+        Some(s) => s,
+        None => {
+            println!("Supplied file is not a .nc file");
+            return Err(());
         }
     };
+    if let Err(e) = fs::write(format!("{new_file}.piku"), asm) {
+        println!("Failed to write file: {e}")
+    }
 
-    let ir = match IRBuilder::new(statements).build() {
-        Ok(i) => {
-            i.iter().for_each(|i| println!("{:?}", i.element));
-            i
-        },
-        Err(e) => {
-            e.iter().for_each(|e| e.report(PATH));
-            return;
-        },
-    };
+    Ok(new_file)
+}
 
-    let asm = Writer::new(ir).process();
-    println!("{asm}");
+fn get_file_name(file: &str) -> Option<&str> {
+    let extension = &file[file.len() - 3..];
+    if extension != ".nc" {
+        return None;
+    }
+    Some(&file[..file.len() - 3])
 }
