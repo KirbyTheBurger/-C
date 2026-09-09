@@ -1,6 +1,6 @@
 const PATH: &str = "test.nc";
 
-use neg_c::{ir::builder::IRBuilder, lexer::tokenize, parser::Parser};
+use neg_c::{ir::builder::IRBuilder, lexer::tokenize, parser::Parser, writer::Writer};
 
 fn main() {
     let input = std::fs::read_to_string(PATH).unwrap();
@@ -28,12 +28,17 @@ fn main() {
         }
     };
 
-    let _ir = match IRBuilder::new(statements).build() {
+    let ir = match IRBuilder::new(statements).build() {
         Ok(i) => {
             i.iter().for_each(|i| println!("{:?}", i.element));
+            i
         },
         Err(e) => {
             e.iter().for_each(|e| e.report(PATH));
+            return;
         },
     };
+
+    let asm = Writer::new(ir).process();
+    println!("{asm}");
 }

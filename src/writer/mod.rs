@@ -18,7 +18,7 @@ impl Writer {
         Self {
             instructions: instructions.into_iter().map(|i| Rc::new(i)).collect(),
             pos: 0,
-            free_regs: HashSet::new(),
+            free_regs: (0..7_usize).into_iter().collect(),
             vreg_map: HashMap::new(),
 
             output: String::new(),
@@ -43,6 +43,7 @@ impl Writer {
             Instr::Print(vreg) => {
                 let reg = self.get_reg(vreg).expect("no free regs");
                 self.write(format!("OUT {reg}"));
+                self.free_reg(reg);
             }
             _ => todo!()
         }
@@ -56,6 +57,7 @@ impl Writer {
         let reg = self.free_regs.iter().next().copied();
         if let Some(r) = reg {
             self.free_regs.remove(&r);
+            self.vreg_map.insert(vreg, r);
         }
         reg
     }
