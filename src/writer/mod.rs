@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, rc::Rc};
+use std::{collections::{BTreeSet, HashMap}, rc::Rc};
 
 use crate::{Spanned, ir::{Instr, VReg}};
 
@@ -7,7 +7,7 @@ pub type Reg = usize;
 pub struct Writer {
     instructions: Vec<Rc<Spanned<Instr>>>,
     pos: usize,
-    free_regs: HashSet<Reg>,
+    free_regs: BTreeSet<Reg>,
     vreg_map: HashMap<VReg, Reg>,
 
     output: String,
