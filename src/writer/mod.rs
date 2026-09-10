@@ -2,6 +2,8 @@ use std::{collections::{BTreeSet, HashMap}, rc::Rc};
 
 use crate::{Spanned, ir::{Instr, VReg}};
 
+mod tests;
+
 pub type Reg = usize;
 
 pub struct Writer {
