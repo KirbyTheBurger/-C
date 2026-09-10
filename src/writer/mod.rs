@@ -66,7 +66,7 @@ impl Writer {
         self.vreg_map.retain(|_, r| *r != reg);
     }
 
-    fn write(&mut self, src: impl Into<Arc<str>>) {
+    fn write(&mut self, src: impl Into<String>) {
         self.output.extend(src.into().chars());
         self.output.extend("\n".chars());
     }
