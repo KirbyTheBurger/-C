@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, rc::Rc, sync::Arc};
+use std::{collections::{HashMap, HashSet}, rc::Rc};
 
 use crate::{Spanned, ir::{Instr, VReg}};
 
