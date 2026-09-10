@@ -63,6 +63,7 @@ impl Writer {
 
     fn free_reg(&mut self, reg: Reg) {
         self.free_regs.insert(reg);
+        self.vreg_map.retain(|_, r| *r != reg);
     }
 
     fn write(&mut self, src: impl Into<Arc<str>>) {
