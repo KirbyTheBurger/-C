@@ -9,8 +9,8 @@ mod tests;
 pub enum Token {
     #[token("print")] Print,
 
-    #[regex("[a-zA-Z_]+", |lex| lex.slice().to_string())]
-    Identifier(String),
+    // #[regex("[a-zA-Z_]+", |lex| lex.slice().to_string())]
+    // Identifier(String),
     #[regex("(0(x|X)[0-9a-fA-F]+|0(b|B)[01]+|[0-9]+)", |lex| parse_num(lex))]
     Number(u16),
 }
