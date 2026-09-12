@@ -85,8 +85,6 @@ mod tests {
 
     #[test]
     fn parses_hex_and_binary_numbers() {
-        // lexing 0xFF / 0b1010 is the lexer's job now, so just supply the
-        // already-decoded values the lexer would have produced.
         let result = run(vec![
             Token::Print, Token::Number(255),
             Token::Print, Token::Number(10),
