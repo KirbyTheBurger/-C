@@ -13,6 +13,11 @@ pub enum Token {
     Number(u16),
 
     #[token("print")] Print,
+
+    #[token("+")] Add,
+    #[token("-")] Sub,
+    #[token("*")] Mul,
+    #[token("/")] Div,
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Spanned<Token>>, Vec<Error>> {
