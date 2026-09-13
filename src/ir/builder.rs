@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Spanned, error::Error, ir::{Instr, VReg}, lexer::Token, parser::{Expression, Statement}};
+use crate::{Spanned, ir::{Instr, VReg}, lexer::Token, parser::{Expression, Statement}};
 
 pub struct IRBuilder {
     input: Vec<Rc<Spanned<Statement>>>,
@@ -17,37 +17,30 @@ impl IRBuilder {
         }
     }
 
-    pub fn build(&mut self) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+    pub fn build(&mut self) -> Vec<Spanned<Instr>> {
         let mut instructions = vec![];
-        let mut errors = vec![];
 
         while let Some(stat) = self.current() {
-            match self.eval_statement(stat.clone()) {
-                Ok(mut v) => instructions.append(&mut v),
-                Err(mut e) => errors.append(&mut e),
-            }
+            let mut v = self.eval_statement(stat.clone());
+            instructions.append(&mut v);
             self.advance();
         }
 
-        if errors.is_empty() {
-            Ok(instructions)
-        } else {
-            Err(errors)
-        }
+        instructions
     }
 
     fn eval_statement(
         &mut self,
         statement: Rc<Spanned<Statement>>
-    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+    ) -> Vec<Spanned<Instr>> {
         let span = statement.span.clone();
         
         match &statement.element {
             Statement::Print(e) => {
                 let dest = self.get_reg();
-                let mut v = self.eval_expression(e, dest)?;
+                let mut v = self.eval_expression(e, dest);
                 v.push(Instr::Print(dest).with_span(span));
-                Ok(v)
+                v
             },
             Statement::Expression(e) => {
                 let dest = self.get_reg();
@@ -60,7 +53,7 @@ impl IRBuilder {
         &mut self,
         expression: &Spanned<Expression>,
         dest: VReg
-    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+    ) -> Vec<Spanned<Instr>> {
         let instructions = match &expression.element {
             Expression::Number(n) => vec![Instr::LoadImm(dest, *n)],
             Expression::Paren(e) => return self.eval_expression(e, dest),
@@ -69,7 +62,7 @@ impl IRBuilder {
             },
         };
 
-        Ok(instructions.into_iter().map(|i| i.with_span(expression.span.clone())).collect())
+        instructions.into_iter().map(|i| i.with_span(expression.span.clone())).collect()
     }
 
     fn eval_binary(
@@ -79,12 +72,12 @@ impl IRBuilder {
         op: &Token,
         dest: VReg,
         span: std::ops::Range<usize>,
-    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+    ) -> Vec<Spanned<Instr>> {
         let left_reg = self.get_reg();
         let right_reg = self.get_reg();
 
-        let left_ir = self.eval_expression(left, left_reg)?;
-        let right_ir = self.eval_expression(right, right_reg)?;
+        let left_ir = self.eval_expression(left, left_reg);
+        let right_ir = self.eval_expression(right, right_reg);
 
         let op_ir = vec![match op {
             Token::Add => Instr::Add { left: left_reg, right: right_reg, dest },
@@ -94,7 +87,7 @@ impl IRBuilder {
             _ => panic!("unexpected token"),
         }.with_span(span)];
 
-        Ok(left_ir.into_iter().chain(right_ir).chain(op_ir).collect())
+        left_ir.into_iter().chain(right_ir).chain(op_ir).collect()
     }
 
     fn advance(&mut self) {

@@ -40,18 +40,7 @@ pub fn compile(src: String, file: String, debug: bool) -> Option<String> {
         }
     };
 
-    let ir = match IRBuilder::new(statements).build() {
-        Ok(i) => {
-            if debug {
-                i.iter().for_each(|i| println!("{:?}", i.element));
-            }
-            i
-        },
-        Err(e) => {
-            e.iter().for_each(|e| e.report(&file));
-            return None;
-        },
-    };
+    let ir = IRBuilder::new(statements).build();
 
     let asm = Writer::new(ir).process();
     Some(asm)
