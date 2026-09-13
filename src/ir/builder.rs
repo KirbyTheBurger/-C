@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Spanned, error::Error, ir::{Instr, VReg}, parser::{Expression, Statement}};
+use crate::{Spanned, error::Error, ir::{Instr, VReg}, lexer::Token, parser::{Expression, Statement}};
 
 pub struct IRBuilder {
     input: Vec<Rc<Spanned<Statement>>>,
@@ -36,7 +36,10 @@ impl IRBuilder {
         }
     }
 
-    fn eval_statement(&mut self, statement: Rc<Spanned<Statement>>) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+    fn eval_statement(
+        &mut self,
+        statement: Rc<Spanned<Statement>>
+    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
         let span = statement.span.clone();
         
         match &statement.element {
@@ -53,13 +56,45 @@ impl IRBuilder {
         }
     }
 
-    fn eval_expression(&mut self, expression: &Spanned<Expression>, dest: VReg) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
-        let span = expression.span.clone();
+    fn eval_expression(
+        &mut self,
+        expression: &Spanned<Expression>,
+        dest: VReg
+    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+        let instructions = match &expression.element {
+            Expression::Number(n) => vec![Instr::LoadImm(dest, *n)],
+            Expression::Paren(e) => return self.eval_expression(e, dest),
+            Expression::Binary { left, op, right } => {
+                return self.eval_binary(left, right, op, dest, expression.span.clone());
+            },
+        };
 
-        match expression.element {
-            Expression::Number(n) => Ok(vec![Instr::LoadImm(dest, n).with_span(span)]),
-            _ => todo!(),
-        }
+        Ok(instructions.into_iter().map(|i| i.with_span(expression.span.clone())).collect())
+    }
+
+    fn eval_binary(
+        &mut self,
+        left: &Spanned<Expression>,
+        right: &Spanned<Expression>,
+        op: &Token,
+        dest: VReg,
+        span: std::ops::Range<usize>,
+    ) -> Result<Vec<Spanned<Instr>>, Vec<Error>> {
+        let left_reg = self.get_reg();
+        let right_reg = self.get_reg();
+
+        let left_ir = self.eval_expression(left, left_reg)?;
+        let right_ir = self.eval_expression(right, right_reg)?;
+
+        let op_ir = vec![match op {
+            Token::Add => Instr::Add { left: left_reg, right: right_reg, dest },
+            Token::Sub => Instr::Sub { left: left_reg, right: right_reg, dest },
+            Token::Mul => Instr::Mul { left: left_reg, right: right_reg, dest },
+            Token::Div => Instr::Div { left: left_reg, right: right_reg, dest },
+            _ => panic!("unexpected token"),
+        }.with_span(span)];
+
+        Ok(left_ir.into_iter().chain(right_ir).chain(op_ir).collect())
     }
 
     fn advance(&mut self) {
