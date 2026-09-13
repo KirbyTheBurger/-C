@@ -46,7 +46,8 @@ impl Writer {
                 let reg = self.get_reg(vreg).expect("no free regs");
                 self.write(format!("OUT r{reg}"));
                 self.free_reg(reg);
-            }
+            },
+            _ => todo!(),
         }
     }
 
