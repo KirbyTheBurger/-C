@@ -91,8 +91,8 @@ impl Parser {
                 break;
             }
 
-            self.advance();
             let rhs_start = self.expect_some("after operator")?;
+            self.advance();
             let right = self.parse_expression_bp(rhs_start, right_bp)?;
 
             let span_end = right.span.end;
@@ -115,10 +115,10 @@ impl Parser {
         let expression = match current.element {
             Token::Number(n) => Expression::Number(n),
             Token::LParen => {
-                self.advance();
                 let inner_start = self.expect_some("after `(`")?;
+                self.advance();
                 let inner = self.parse_expression(inner_start)?;
-                self.expect(Token::RParen, "after expression")?;
+                self.expect_current(Token::RParen, "after expression")?;
                 Expression::Paren(Box::new(inner))
             },
             _ => panic!("unexpected token"),
@@ -191,6 +191,21 @@ impl Parser {
                     expected, context
                 ), current.span.clone()))
             }
+        }
+    }
+
+    fn expect_current(&mut self, expected: Token, context: &str) -> Result<Rc<Spanned<Token>>, Error> {
+        let current = self.current();
+        match current {
+            Some(t) if t.element == expected => Ok(t),
+            Some(t) => Err(Error::new(
+                format!("Expected `{:?}` {}, got `{:?}`", expected, context, t.element),
+                t.span.clone(),
+            )),
+            None => Err(Error::new(
+                format!("Expected `{:?}` {}, got EOF", expected, context),
+                self.previous().span.end..self.previous().span.end,
+            )),
         }
     }
 }
