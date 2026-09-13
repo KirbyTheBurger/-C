@@ -11,6 +11,8 @@ pub enum Token {
     // Identifier(String),
     #[regex("(0(x|X)[0-9a-fA-F]+|0(b|B)[01]+|[0-9]+)", |lex| parse_num(lex))]
     Number(u16),
+    #[regex(r"'([^'\\]|\\.)'", |lex| parse_char(lex))]
+    Char(u8),
 
     #[token("print")] Print,
 
@@ -39,6 +41,27 @@ pub fn tokenize(source: &str) -> Result<Vec<Spanned<Token>>, Vec<Error>> {
     } else {
         Err(errors)
     }
+}
+
+fn parse_char(lex: &mut logos::Lexer<Token>) -> Option<u8> {
+    let slice = lex.slice();
+    let inner = &slice[1..slice.len() - 1];
+
+    let byte = if let Some(escaped) = inner.strip_prefix("\\") {
+        match escaped {
+            "n" => b'\n',
+            "t" => b'\t',
+            "r" => b'\r',
+            "0" => b'\0',
+            "\\" => b'\\',
+            "'" => b'\'',
+            _ => return None,
+        }
+    } else {
+        *inner.as_bytes().first()?
+    };
+
+    Some(byte)
 }
 
 fn parse_num(lex: &mut logos::Lexer<Token>) -> Option<u16> {
