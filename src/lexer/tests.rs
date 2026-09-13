@@ -75,4 +75,55 @@ mod tests {
     fn hex_overflow_errors() {
         run("0x10000");
     }
+
+    #[test]
+    fn char_plain() {
+        assert_eq!(run("'a'"), vec![Char(b'a')]);
+    }
+
+    #[test]
+    fn char_digit() {
+        assert_eq!(run("'5'"), vec![Char(b'5')]);
+    }
+
+    #[test]
+    fn char_newline_escape() {
+        assert_eq!(run(r"'\n'"), vec![Char(b'\n')]);
+    }
+
+    #[test]
+    fn char_tab_escape() {
+        assert_eq!(run(r"'\t'"), vec![Char(b'\t')]);
+    }
+
+    #[test]
+    fn char_carriage_return_escape() {
+        assert_eq!(run(r"'\r'"), vec![Char(b'\r')]);
+    }
+
+    #[test]
+    fn char_null_escape() {
+        assert_eq!(run(r"'\0'"), vec![Char(b'\0')]);
+    }
+
+    #[test]
+    fn char_escaped_backslash() {
+        assert_eq!(run(r"'\\'"), vec![Char(b'\\')]);
+    }
+
+    #[test]
+    fn char_escaped_quote() {
+        assert_eq!(run(r"'\''"), vec![Char(b'\'')]);
+    }
+
+    #[test]
+    fn chained_chars() {
+        assert_eq!(run(r"'a' 'b' '\n'"), vec![Char(b'a'), Char(b'b'), Char(b'\n')]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_escape_errors() {
+        run(r"'\z'");
+    }
 }
