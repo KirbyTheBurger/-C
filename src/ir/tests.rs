@@ -2,9 +2,9 @@
 mod tests {
     use std::fmt::Debug;
 
-    use crate::{ir::{Instr, builder::IRBuilder}, parser::{Statement, Expression}, Spanned};
+    use crate::{ir::{Instr, builder::IRBuilder}, parser::{Statement, Expression}, lexer::Token, Spanned};
 
-    fn spanned<T: Debug + PartialEq>(e: T) -> Spanned<T> {
+    fn spanned<T: PartialEq + Debug>(e: T) -> Spanned<T> {
         Spanned { element: e, span: 0..0 }
     }
 
@@ -12,12 +12,20 @@ mod tests {
         spanned(Expression::Number(n))
     }
 
-    fn print_stmt(n: u16) -> Spanned<Statement> {
-        spanned(Statement::Print(Box::new(num_expr(n))))
+    fn bin_expr(left: Spanned<Expression>, op: Token, right: Spanned<Expression>) -> Spanned<Expression> {
+        spanned(Expression::Binary {
+            left: Box::new(left),
+            op,
+            right: Box::new(right),
+        })
     }
 
-    fn expr_stmt(n: u16) -> Spanned<Statement> {
-        spanned(Statement::Expression(Box::new(num_expr(n))))
+    fn print_stmt(e: Spanned<Expression>) -> Spanned<Statement> {
+        spanned(Statement::Print(Box::new(e)))
+    }
+
+    fn expr_stmt(e: Spanned<Expression>) -> Spanned<Statement> {
+        spanned(Statement::Expression(Box::new(e)))
     }
 
     fn run(statements: Vec<Spanned<Statement>>) -> Vec<Instr> {
@@ -26,81 +34,100 @@ mod tests {
     }
 
     #[test]
-    fn single_print() {
-        let ir = run(vec![print_stmt(5)]);
-        assert_eq!(
-            ir,
-            vec![
-                Instr::LoadImm(0, 5),
-                Instr::Print(0),
-            ]
-        );
-    }
-
-    #[test]
-    fn multiple_prints() {
-        let ir = run(vec![print_stmt(1), print_stmt(2), print_stmt(3)]);
-        assert_eq!(
-            ir,
-            vec![
-                Instr::LoadImm(0, 1),
-                Instr::Print(0),
-                Instr::LoadImm(1, 2),
-                Instr::Print(1),
-                Instr::LoadImm(2, 3),
-                Instr::Print(2),
-            ]
-        );
-    }
-
-    #[test]
-    fn standalone_expression_single_number() {
-        let ir = run(vec![expr_stmt(5)]);
-        assert_eq!(
-            ir,
-            vec![
-                Instr::LoadImm(0, 5),
-            ]
-        );
-    }
-
-    #[test]
-    fn multiple_standalone_expressions() {
-        let ir = run(vec![expr_stmt(5), expr_stmt(7), expr_stmt(9)]);
-        assert_eq!(
-            ir,
-            vec![
-                Instr::LoadImm(0, 5),
-                Instr::LoadImm(1, 7),
-                Instr::LoadImm(2, 9),
-            ]
-        );
-    }
-
-    #[test]
-    fn prints_and_standalone_expressions_mixed() {
+    fn single_add() {
         let ir = run(vec![
-            print_stmt(1),
-            expr_stmt(5),
-            print_stmt(2),
-            expr_stmt(7),
+            expr_stmt(bin_expr(num_expr(1), Token::Add, num_expr(2))),
         ]);
         assert_eq!(
             ir,
             vec![
-                Instr::LoadImm(0, 1),
-                Instr::Print(0),
-                Instr::LoadImm(1, 5),
+                Instr::LoadImm(1, 1),
                 Instr::LoadImm(2, 2),
-                Instr::Print(2),
-                Instr::LoadImm(3, 7),
+                Instr::Add { left: 1, right: 2, dest: 0 },
             ]
         );
     }
 
     #[test]
-    fn empty_program() {
-        let ir = run(vec![]);
-        assert_eq!(ir, vec![]);
+    fn single_sub() {
+        let ir = run(vec![
+            expr_stmt(bin_expr(num_expr(5), Token::Sub, num_expr(3))),
+        ]);
+        assert_eq!(
+            ir,
+            vec![
+                Instr::LoadImm(1, 5),
+                Instr::LoadImm(2, 3),
+                Instr::Sub { left: 1, right: 2, dest: 0 },
+            ]
+        );
+    }
+
+    #[test]
+    fn single_mul() {
+        let ir = run(vec![
+            expr_stmt(bin_expr(num_expr(4), Token::Mul, num_expr(6))),
+        ]);
+        assert_eq!(
+            ir,
+            vec![
+                Instr::LoadImm(1, 4),
+                Instr::LoadImm(2, 6),
+                Instr::Mul { left: 1, right: 2, dest: 0 },
+            ]
+        );
+    }
+
+    #[test]
+    fn single_div() {
+        let ir = run(vec![
+            expr_stmt(bin_expr(num_expr(8), Token::Div, num_expr(2))),
+        ]);
+        assert_eq!(
+            ir,
+            vec![
+                Instr::LoadImm(1, 8),
+                Instr::LoadImm(2, 2),
+                Instr::Div { left: 1, right: 2, dest: 0 },
+            ]
+        );
+    }
+
+    #[test]
+    fn print_arithmetic_result() {
+        let ir = run(vec![
+            print_stmt(bin_expr(num_expr(1), Token::Add, num_expr(2))),
+        ]);
+        assert_eq!(
+            ir,
+            vec![
+                Instr::LoadImm(1, 1),
+                Instr::LoadImm(2, 2),
+                Instr::Add { left: 1, right: 2, dest: 0 },
+                Instr::Print(0),
+            ]
+        );
+    }
+
+    #[test]
+    fn nested_binary_expression() {
+        // (1 + 2) * 3
+        let ir = run(vec![
+            expr_stmt(bin_expr(
+                bin_expr(num_expr(1), Token::Add, num_expr(2)),
+                Token::Mul,
+                num_expr(3),
+            )),
+        ]);
+        assert_eq!(
+            ir,
+            vec![
+                Instr::LoadImm(3, 1),
+                Instr::LoadImm(4, 2),
+                Instr::Add { left: 3, right: 4, dest: 1 },
+                Instr::LoadImm(2, 3),
+                Instr::Mul { left: 1, right: 2, dest: 0 },
+            ]
+        );
     }
 }
