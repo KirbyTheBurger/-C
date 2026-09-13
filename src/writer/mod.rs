@@ -38,17 +38,39 @@ impl Writer {
 
     fn process_instruction(&mut self, instruction: Rc<Spanned<Instr>>) {
         match instruction.element {
-            Instr::LoadImm(vreg, n) => {
-                let reg = self.get_reg(vreg).expect("no free regs");
-                self.write(format!("LD r{reg}, {n}"));
+            Instr::LoadImm(dest, n) => {
+                let dest = self.get_reg(dest).expect("no free regs");
+                self.write(format!("LD r{dest}, {n}"));
             },
-            Instr::Print(vreg) => {
-                let reg = self.get_reg(vreg).expect("no free regs");
+            Instr::Print(reg) => {
+                let reg = self.get_reg(reg).expect("no free regs");
                 self.write(format!("OUT r{reg}"));
                 self.free_reg(reg);
             },
-            _ => todo!(),
+            Instr::Add { left, right, dest } => {
+                self.write_binop("ADD", left, right, dest)
+            },
+            Instr::Sub { left, right, dest } => {
+                self.write_binop("SUB", left, right, dest)
+            },
+            Instr::Mul { left, right, dest } => {
+                self.write_binop("MUL", left, right, dest)
+            },
+            Instr::Div { left, right, dest } => {
+                self.write_binop("DIV", left, right, dest)
+            },
         }
+    }
+
+    fn write_binop(&mut self, mnemonic: &str, left: VReg, right: VReg, dest: VReg) {
+        let dest = self.get_reg(dest).expect("no free regs");
+        let left = self.get_reg(left).expect("no free regs");
+        let right = self.get_reg(right).expect("no free regs");
+
+        self.write(format!("{mnemonic} r{left}, r{right}"));
+        self.write(format!("LD r{dest}, r{left}"));
+        self.free_reg(left);
+        self.free_reg(right);
     }
 
     fn get_reg(&mut self, vreg: VReg) -> Option<usize> {
