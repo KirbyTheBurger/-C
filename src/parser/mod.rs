@@ -13,6 +13,13 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(u16),
+
+    Binary {
+        left: Box<Spanned<Expression>>,
+        op: Token,
+        right: Box<Spanned<Expression>>,
+    },
+    Paren(Box<Spanned<Expression>>),
 }
 
 pub struct Parser {
@@ -68,18 +75,53 @@ impl Parser {
         })
     }
 
-    fn read_print(&mut self) -> Result<Statement, Error> {
-        let current = self.expect_some("after `print`")?;
-        self.advance();
-        Ok(Statement::Print(Box::new(self.parse_expression(current)?)))
+    fn parse_expression(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Expression>, Error> {
+        self.parse_expression_bp(current, 0)
     }
 
-    fn parse_expression(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Expression>, Error> {
+    fn parse_expression_bp(&mut self, current: Rc<Spanned<Token>>, min_bp: u8) -> Result<Spanned<Expression>, Error> {
+        let span_start = current.span.start;
+        let mut left = self.parse_primary(current)?;
+
+        loop {
+            let Some(op_tok) = self.current() else { break; };
+
+            let Some((left_bp, right_bp)) = binding_power(&op_tok.element) else { break; };
+            if left_bp < min_bp {
+                break;
+            }
+
+            self.advance();
+            let rhs_start = self.expect_some("after operator")?;
+            let right = self.parse_expression_bp(rhs_start, right_bp)?;
+
+            let span_end = right.span.end;
+            left = Spanned {
+                element: Expression::Binary {
+                    left: Box::new(left),
+                    op: op_tok.element.clone(),
+                    right: Box::new(right),
+                },
+                span: span_start..span_end,
+            }
+        }
+
+        Ok(left)
+    }
+
+    fn parse_primary(&mut self, current: Rc<Spanned<Token>>) -> Result<Spanned<Expression>, Error> {
         let span_start = current.span.start;
 
         let expression = match current.element {
             Token::Number(n) => Expression::Number(n),
-            _ => todo!(),
+            Token::LParen => {
+                self.advance();
+                let inner_start = self.expect_some("after `(`")?;
+                let inner = self.parse_expression(inner_start)?;
+                self.expect(Token::RParen, "after expression")?;
+                Expression::Paren(Box::new(inner))
+            },
+            _ => panic!("unexpected token"),
         };
 
         let span_end = self.current().unwrap().span.end;
@@ -89,6 +131,12 @@ impl Parser {
             element: expression,
             span: span_start..span_end,
         })
+    }
+
+    fn read_print(&mut self) -> Result<Statement, Error> {
+        let current = self.expect_some("after `print`")?;
+        self.advance();
+        Ok(Statement::Print(Box::new(self.parse_expression(current)?)))
     }
 
     /// Assumes previous token isn't `None`
@@ -144,5 +192,13 @@ impl Parser {
                 ), current.span.clone()))
             }
         }
+    }
+}
+
+fn binding_power(op: &Token) -> Option<(u8, u8)> {
+    match op {
+        Token::Add | Token::Sub => Some((1, 2)),
+        Token::Mul | Token::Div => Some((3, 4)),
+        _ => None,
     }
 }
