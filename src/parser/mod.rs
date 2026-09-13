@@ -13,6 +13,7 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(u16),
+    Char(u8),
 
     Binary {
         left: Box<Spanned<Expression>>,
@@ -114,6 +115,7 @@ impl Parser {
 
         let expression = match current.element {
             Token::Number(n) => Expression::Number(n),
+            Token::Char(n) => Expression::Char(n),
             Token::LParen => {
                 let inner_start = self.expect_some("after `(`")?;
                 self.advance();
