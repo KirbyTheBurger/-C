@@ -58,6 +58,7 @@ impl IRBuilder {
 
         match expression.element {
             Expression::Number(n) => Ok(vec![Instr::LoadImm(dest, n).with_span(span)]),
+            _ => todo!(),
         }
     }
 
