@@ -18,6 +18,9 @@ pub enum Token {
     #[token("-")] Sub,
     #[token("*")] Mul,
     #[token("/")] Div,
+
+    #[token("(")] LParen,
+    #[token(")")] RParen,
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Spanned<Token>>, Vec<Error>> {
