@@ -8,6 +8,28 @@ pub type VReg = usize;
 #[derive(Debug, PartialEq)]
 pub enum Instr {
     LoadImm(VReg, u16),
+
+    Add {
+        left: VReg,
+        right: VReg,
+        dest: VReg,
+    },
+    Sub {
+        left: VReg,
+        right: VReg,
+        dest: VReg,
+    },
+    Mul {
+        left: VReg,
+        right: VReg,
+        dest: VReg,
+    },
+    Div {
+        left: VReg,
+        right: VReg,
+        dest: VReg,
+    },
+
     Print(VReg),
 }
 
