@@ -41,6 +41,9 @@ pub fn compile(src: String, file: String, debug: bool) -> Option<String> {
     };
 
     let ir = IRBuilder::new(statements).build();
+    if debug {
+        ir.iter().for_each(|i| println!("{:?}", i.element));
+    }
 
     let asm = Writer::new(ir).process();
     Some(asm)
