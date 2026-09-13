@@ -33,15 +33,8 @@ impl IRBuilder {
         &mut self,
         statement: Rc<Spanned<Statement>>
     ) -> Vec<Spanned<Instr>> {
-        let span = statement.span.clone();
-        
         match &statement.element {
-            Statement::Print(e) => {
-                let dest = self.get_reg();
-                let mut v = self.eval_expression(e, dest);
-                v.push(Instr::Print(dest).with_span(span));
-                v
-            },
+            Statement::Print(e) => self.eval_print(e),
             Statement::Expression(e) => {
                 let dest = self.get_reg();
                 self.eval_expression(e, dest)
@@ -56,6 +49,7 @@ impl IRBuilder {
     ) -> Vec<Spanned<Instr>> {
         let instructions = match &expression.element {
             Expression::Number(n) => vec![Instr::LoadImm(dest, *n)],
+            Expression::Char(n) => vec![Instr::LoadImm(dest, *n as u16)],
             Expression::Paren(e) => return self.eval_expression(e, dest),
             Expression::Binary { left, op, right } => {
                 return self.eval_binary(left, right, op, dest, expression.span.clone());
@@ -63,6 +57,24 @@ impl IRBuilder {
         };
 
         instructions.into_iter().map(|i| i.with_span(expression.span.clone())).collect()
+    }
+
+    fn eval_print(&mut self, expression: &Spanned<Expression>) -> Vec<Spanned<Instr>> {
+        let dest = self.get_reg();
+        let mut instructions = vec![];
+
+        if let Expression::Number(n) = expression.element {
+            for c in n.to_string().chars() {
+                instructions.append(&mut vec![
+                    Instr::LoadImm(dest, c as u16).with_span(expression.span.clone()),
+                    Instr::Print(dest).with_span(expression.span.clone()),
+                ]);
+            }
+        }
+        
+        instructions.append(&mut self.eval_expression(expression, dest));
+        instructions.push(Instr::Print(dest).with_span(expression.span.clone()));
+        instructions
     }
 
     fn eval_binary(
