@@ -1,17 +1,33 @@
 #[cfg(test)]
 mod tests {
-    use crate::{ir::{Instr, builder::IRBuilder}, lexer::tokenize, parser::Parser};
+    use std::fmt::Debug;
 
-    fn run(src: &str) -> Vec<Instr> {
-        let tokens = tokenize(src).unwrap();
-        let statements = Parser::new(tokens).parse().unwrap();
+    use crate::{ir::{Instr, builder::IRBuilder}, parser::{Statement, Expression}, Spanned};
+
+    fn spanned<T: Debug + PartialEq>(e: T) -> Spanned<T> {
+        Spanned { element: e, span: 0..0 }
+    }
+
+    fn num_expr(n: u16) -> Spanned<Expression> {
+        spanned(Expression::Number(n))
+    }
+
+    fn print_stmt(n: u16) -> Spanned<Statement> {
+        spanned(Statement::Print(Box::new(num_expr(n))))
+    }
+
+    fn expr_stmt(n: u16) -> Spanned<Statement> {
+        spanned(Statement::Expression(Box::new(num_expr(n))))
+    }
+
+    fn run(statements: Vec<Spanned<Statement>>) -> Vec<Instr> {
         IRBuilder::new(statements).build().unwrap()
             .into_iter().map(|i| i.element).collect()
     }
 
     #[test]
     fn single_print() {
-        let ir = run("print 5");
+        let ir = run(vec![print_stmt(5)]);
         assert_eq!(
             ir,
             vec![
@@ -23,7 +39,7 @@ mod tests {
 
     #[test]
     fn multiple_prints() {
-        let ir = run("print 1\nprint 2\nprint 3");
+        let ir = run(vec![print_stmt(1), print_stmt(2), print_stmt(3)]);
         assert_eq!(
             ir,
             vec![
@@ -39,7 +55,7 @@ mod tests {
 
     #[test]
     fn standalone_expression_single_number() {
-        let ir = run("5");
+        let ir = run(vec![expr_stmt(5)]);
         assert_eq!(
             ir,
             vec![
@@ -50,7 +66,7 @@ mod tests {
 
     #[test]
     fn multiple_standalone_expressions() {
-        let ir = run("5\n7\n9");
+        let ir = run(vec![expr_stmt(5), expr_stmt(7), expr_stmt(9)]);
         assert_eq!(
             ir,
             vec![
@@ -63,7 +79,12 @@ mod tests {
 
     #[test]
     fn prints_and_standalone_expressions_mixed() {
-        let ir = run("print 1\n5\nprint 2\n7");
+        let ir = run(vec![
+            print_stmt(1),
+            expr_stmt(5),
+            print_stmt(2),
+            expr_stmt(7),
+        ]);
         assert_eq!(
             ir,
             vec![
@@ -79,7 +100,7 @@ mod tests {
 
     #[test]
     fn empty_program() {
-        let ir = run("");
+        let ir = run(vec![]);
         assert_eq!(ir, vec![]);
     }
 }
