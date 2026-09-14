@@ -265,4 +265,28 @@ mod tests {
             _ => panic!("expected Statement::Print, got {:?}", result[0]),
         }
     }
+
+    #[test]
+    fn parses_char_literal_as_expression_statement() {
+        let result = run(vec![Token::Char(b'a')]);
+        match &result[0] {
+            Statement::Expression(e) => assert_eq!(e.element, Expression::Char(b'a')),
+            _ => panic!("expected Statement::Expression, got {:?}", result[0]),
+        }
+    }
+
+    fn chr(c: u8) -> Expression {
+        Expression::Char(c)
+    }
+
+    #[test]
+    fn parses_char_in_binary_expression() {
+        let result = run(vec![Token::Char(b'a'), Token::Add, Token::Number(1)]);
+        match &result[0] {
+            Statement::Expression(e) => {
+                assert_eq!(e.element, bin(chr(b'a'), Token::Add, num(1)));
+            }
+            _ => panic!("expected Statement::Expression, got {:?}", result[0]),
+        }
+    }
 }
