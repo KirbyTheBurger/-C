@@ -70,6 +70,7 @@ impl IRBuilder {
                     Instr::Print(dest).with_span(expression.span.clone()),
                 ]);
             }
+            return instructions;
         }
         
         instructions.append(&mut self.eval_expression(expression, dest));
