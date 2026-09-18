@@ -30,7 +30,20 @@ pub enum Instr {
         dest: VReg,
     },
 
+    Cmp(VReg, VReg),
+
+    Label(String),
+    Jmp(String),
+    Jnz(String),
+    Jz(String),
+
+
     Print(VReg),
+}
+
+enum Ty {
+    Char,
+    Int,
 }
 
 impl Instr {

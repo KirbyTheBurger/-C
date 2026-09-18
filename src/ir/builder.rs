@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Spanned, ir::{Instr, VReg}, lexer::Token, parser::{Expression, Statement}};
+use crate::{Spanned, ir::{Instr, Ty, VReg}, lexer::Token, parser::{Expression, Statement}};
 
 pub struct IRBuilder {
     input: Vec<Rc<Spanned<Statement>>>,
@@ -60,22 +60,20 @@ impl IRBuilder {
     }
 
     fn eval_print(&mut self, expression: &Spanned<Expression>) -> Vec<Spanned<Instr>> {
+        let ty = infer_type(&expression.element);
         let dest = self.get_reg();
-        let mut instructions = vec![];
+        let mut instructions = self.eval_expression(expression, dest);
 
-        if let Expression::Number(n) = expression.element {
-            for c in n.to_string().chars() {
-                instructions.append(&mut vec![
-                    Instr::LoadImm(dest, c as u16).with_span(expression.span.clone()),
-                    Instr::Print(dest).with_span(expression.span.clone()),
-                ]);
-            }
-            return instructions;
+        match ty {
+            Ty::Int => instructions.push(Instr::Print(dest).with_span(expression.span.clone())),
+            Ty::Char => instructions.extend(self.emit_decimal_print(dest, expression)),
         }
-        
-        instructions.append(&mut self.eval_expression(expression, dest));
-        instructions.push(Instr::Print(dest).with_span(expression.span.clone()));
+
         instructions
+    }
+
+    fn emit_decimal_print(&mut self, dest: VReg, expression: &Spanned<Expression>) -> Vec<Spanned<Instr>> {
+        todo!()
     }
 
     fn eval_binary(
@@ -114,5 +112,14 @@ impl IRBuilder {
     fn get_reg(&mut self) -> VReg {
         self.next_reg += 1;
         self.next_reg - 1
+    }
+}
+
+fn infer_type(expr: &Expression) -> Ty {
+    match expr {
+        Expression::Number(_) => Ty::Int,
+        Expression::Char(_) => Ty::Char,
+        Expression::Paren(e) => infer_type(&e.element),
+        Expression::Binary { left, .. } => infer_type(&left.element),
     }
 }
