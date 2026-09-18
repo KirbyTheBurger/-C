@@ -1,13 +1,13 @@
 use std::{collections::{BTreeSet, HashMap}, rc::Rc};
 
-use crate::{Spanned, ir::{Instr, VReg}};
+use crate::ir::{VReg, Instr};
 
 mod tests;
 
 pub type Reg = usize;
 
 pub struct Writer {
-    instructions: Vec<Rc<Spanned<Instr>>>,
+    instructions: Vec<Rc<Instr>>,
     pos: usize,
     free_regs: BTreeSet<Reg>,
     vreg_map: HashMap<VReg, Reg>,
@@ -16,7 +16,7 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn new(instructions: Vec<Spanned<Instr>>) -> Self {
+    pub fn new(instructions: Vec<Instr>) -> Self {
         Self {
             instructions: instructions.into_iter().map(|i| Rc::new(i)).collect(),
             pos: 0,
@@ -36,8 +36,8 @@ impl Writer {
         self.output.clone()
     }
 
-    fn process_instruction(&mut self, instruction: Rc<Spanned<Instr>>) {
-        match instruction.element {
+    fn process_instruction(&mut self, instruction: Rc<Instr>) {
+        match *instruction {
             Instr::LoadImm(dest, n) => {
                 let dest = self.get_reg(dest).expect("no free regs");
                 self.write(format!("LD r{dest}, {n}"));
@@ -97,7 +97,7 @@ impl Writer {
         self.output.extend("\n".chars());
     }
 
-    fn current(&self) -> Option<Rc<Spanned<Instr>>> {
+    fn current(&self) -> Option<Rc<Instr>> {
         self.instructions.get(self.pos).cloned()
     }
 

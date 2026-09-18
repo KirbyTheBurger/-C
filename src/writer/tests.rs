@@ -1,19 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use crate::{Spanned, ir::Instr, writer::Writer};
-
-    fn spanned(instr: Instr) -> Spanned<Instr> {
-        Spanned {
-            element: instr,
-            span: 0..0,
-        }
-    }
+    use crate::{ir::Instr, writer::Writer};
 
     #[test]
     fn test_single_print() {
         let instrs = vec![
-            spanned(Instr::LoadImm(0, 42)),
-            spanned(Instr::Print(0)),
+            Instr::LoadImm(0, 42),
+            Instr::Print(0),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -25,10 +18,10 @@ mod tests {
         #[test]
     fn test_double_print() {
         let instrs = vec![
-            spanned(Instr::LoadImm(0, 1)),
-            spanned(Instr::Print(0)),
-            spanned(Instr::LoadImm(1, 2)),
-            spanned(Instr::Print(1)),
+            Instr::LoadImm(0, 1),
+            Instr::Print(0),
+            Instr::LoadImm(1, 2),
+            Instr::Print(1),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -40,10 +33,10 @@ mod tests {
     #[test]
     fn test_single_add() {
         let instrs = vec![
-            spanned(Instr::LoadImm(1, 1)),
-            spanned(Instr::LoadImm(2, 2)),
-            spanned(Instr::Add { left: 1, right: 2, dest: 0 }),
-            spanned(Instr::Print(0)),
+            Instr::LoadImm(1, 1),
+            Instr::LoadImm(2, 2),
+            Instr::Add { left: 1, right: 2, dest: 0 },
+            Instr::Print(0),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -58,10 +51,10 @@ mod tests {
     #[test]
     fn test_single_sub() {
         let instrs = vec![
-            spanned(Instr::LoadImm(4, 5)),
-            spanned(Instr::LoadImm(5, 3)),
-            spanned(Instr::Sub { left: 4, right: 5, dest: 3 }),
-            spanned(Instr::Print(3)),
+            Instr::LoadImm(4, 5),
+            Instr::LoadImm(5, 3),
+            Instr::Sub { left: 4, right: 5, dest: 3 },
+            Instr::Print(3),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -76,10 +69,10 @@ mod tests {
     #[test]
     fn test_single_mul() {
         let instrs = vec![
-            spanned(Instr::LoadImm(7, 4)),
-            spanned(Instr::LoadImm(8, 6)),
-            spanned(Instr::Mul { left: 7, right: 8, dest: 6 }),
-            spanned(Instr::Print(6)),
+            Instr::LoadImm(7, 4),
+            Instr::LoadImm(8, 6),
+            Instr::Mul { left: 7, right: 8, dest: 6 },
+            Instr::Print(6),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -94,10 +87,10 @@ mod tests {
     #[test]
     fn test_single_div() {
         let instrs = vec![
-            spanned(Instr::LoadImm(10, 8)),
-            spanned(Instr::LoadImm(11, 2)),
-            spanned(Instr::Div { left: 10, right: 11, dest: 9 }),
-            spanned(Instr::Print(9)),
+            Instr::LoadImm(10, 8),
+            Instr::LoadImm(11, 2),
+            Instr::Div { left: 10, right: 11, dest: 9 },
+            Instr::Print(9),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -112,12 +105,12 @@ mod tests {
     #[test]
     fn test_add_mul_precedence() {
         let instrs = vec![
-            spanned(Instr::LoadImm(13, 1)),
-            spanned(Instr::LoadImm(15, 2)),
-            spanned(Instr::LoadImm(16, 3)),
-            spanned(Instr::Mul { left: 15, right: 16, dest: 14 }),
-            spanned(Instr::Add { left: 13, right: 14, dest: 12 }),
-            spanned(Instr::Print(12)),
+            Instr::LoadImm(13, 1),
+            Instr::LoadImm(15, 2),
+            Instr::LoadImm(16, 3),
+            Instr::Mul { left: 15, right: 16, dest: 14 },
+            Instr::Add { left: 13, right: 14, dest: 12 },
+            Instr::Print(12),
         ];
 
         let mut writer = Writer::new(instrs);
@@ -132,12 +125,12 @@ mod tests {
     #[test]
     fn test_paren_overrides_precedence() {
         let instrs = vec![
-            spanned(Instr::LoadImm(21, 1)),
-            spanned(Instr::LoadImm(22, 2)),
-            spanned(Instr::Add { left: 21, right: 22, dest: 19 }),
-            spanned(Instr::LoadImm(20, 3)),
-            spanned(Instr::Mul { left: 19, right: 20, dest: 18 }),
-            spanned(Instr::Print(18)),
+            Instr::LoadImm(21, 1),
+            Instr::LoadImm(22, 2),
+            Instr::Add { left: 21, right: 22, dest: 19 },
+            Instr::LoadImm(20, 3),
+            Instr::Mul { left: 19, right: 20, dest: 18 },
+            Instr::Print(18),
         ];
 
         let mut writer = Writer::new(instrs);
