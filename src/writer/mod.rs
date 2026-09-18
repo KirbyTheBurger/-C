@@ -59,6 +59,7 @@ impl Writer {
             Instr::Div { left, right, dest } => {
                 self.write_binop("DIV", left, right, dest)
             },
+            _ => todo!(),
         }
     }
 
