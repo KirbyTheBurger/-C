@@ -1,13 +1,12 @@
-use crate::Spanned;
-
 pub mod builder;
 mod tests;
 
 pub type VReg = usize;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Instr {
     LoadImm(VReg, u16),
+    Mov(VReg, VReg),
 
     Add {
         left: VReg,
@@ -29,14 +28,21 @@ pub enum Instr {
         right: VReg,
         dest: VReg,
     },
+    Mod {
+        left: VReg,
+        right: VReg,
+        dest: VReg,
+    },
 
     Cmp(VReg, VReg),
 
     Label(String),
     Jmp(String),
-    Jnz(String),
-    Jz(String),
+    Jeq(String),
+    Jne(String),
 
+    Push(VReg),
+    Pop(VReg),
 
     Print(VReg),
 }
@@ -46,11 +52,3 @@ enum Ty {
     Int,
 }
 
-impl Instr {
-    fn with_span(self, span: std::ops::Range<usize>) -> Spanned<Self> {
-        Spanned {
-            element: self,
-            span,
-        }
-    }
-}

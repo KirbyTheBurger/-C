@@ -30,7 +30,6 @@ mod tests {
 
     fn run(statements: Vec<Spanned<Statement>>) -> Vec<Instr> {
         IRBuilder::new(statements).build()
-            .into_iter().map(|i| i.element).collect()
     }
 
     #[test]
