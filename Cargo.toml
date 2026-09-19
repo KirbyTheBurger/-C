@@ -7,4 +7,4 @@ edition = "2024"
 ariadne = "0.6.0"
 clap = { version = "4.6.6", features = ["derive"] }
 logos = "0.16.1"
-piku = "0.1.0"
+piku = "0.1.1"

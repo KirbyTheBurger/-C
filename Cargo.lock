@@ -221,9 +221,9 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "piku"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc74cacfb7dab9062df1b5aec2869cf53035cc91c33b82944298514fc00d8712"
+checksum = "b16017d77c5db1165e1b934542b076d256ab35cbb0632ed4b763dc5777ce3c4d"
 dependencies = [
  "clap",
  "console",
