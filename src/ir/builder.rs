@@ -69,8 +69,8 @@ impl IRBuilder {
         let mut instructions = self.eval_expression(expression, dest);
 
         match ty {
-            Ty::Int => instructions.push(Instr::Print(dest)),
-            Ty::Char => instructions.extend(self.emit_decimal_print(dest)),
+            Ty::Char => instructions.push(Instr::Print(dest)),
+            Ty::Int => instructions.extend(self.emit_decimal_print(dest)),
         }
 
         instructions
