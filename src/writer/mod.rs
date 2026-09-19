@@ -37,7 +37,7 @@ impl Writer {
     }
 
     fn process_instruction(&mut self, instruction: Rc<Instr>) {
-        match *instruction {
+        match &*instruction {
             Instr::LoadImm(dest, n) => {
                 let dest = self.get_reg(dest).expect("no free regs");
                 self.write(format!("LD r{dest}, {n}"));
@@ -59,11 +59,41 @@ impl Writer {
             Instr::Div { left, right, dest } => {
                 self.write_binop("DIV", left, right, dest)
             },
-            _ => todo!(),
+            Instr::Mod { left, right, dest } => {
+                self.write_binop("MOD", left, right, dest);
+            },
+            Instr::Cmp(left, right) => {
+                let left = self.get_reg(left).expect("no free regs");
+                let right = self.get_reg(right).expect("no free regs");
+                self.write(format!("CMP r{left}, r{right}"));
+            },
+            Instr::Drop(reg) => {
+                let reg = self.get_reg(reg).expect("virtual register should exist internally");
+                self.free_reg(reg);
+            },
+            Instr::Label(s) => {
+                self.write(format!("\n{s}:"));
+            },
+            Instr::Jmp(s) => self.write(format!("JMP {s}")),
+            Instr::Jeq(s) => self.write(format!("JEQ {s}")),
+            Instr::Jne(s) => self.write(format!("JNE {s}")),
+            Instr::Mov(dest, other) => {
+                let dest = self.get_reg(dest).expect("no free regs");
+                let other = self.get_reg(other).expect("no free regs");
+                self.write(format!("LD r{dest}, r{other}"));
+            },
+            Instr::Push(reg) => {
+                let reg = self.get_reg(reg).expect("no free regs");
+                self.write(format!("PUSH r{reg}"));
+            },
+            Instr::Pop(reg) => {
+                let reg = self.get_reg(reg).expect("no free regs");
+                self.write(format!("POP r{reg}"));
+            },
         }
     }
 
-    fn write_binop(&mut self, mnemonic: &str, left: VReg, right: VReg, dest: VReg) {
+    fn write_binop(&mut self, mnemonic: &str, left: &VReg, right: &VReg, dest: &VReg) {
         let dest = self.get_reg(dest).expect("no free regs");
         let left = self.get_reg(left).expect("no free regs");
         let right = self.get_reg(right).expect("no free regs");
@@ -72,15 +102,15 @@ impl Writer {
         self.write(format!("LD r{dest}, r{left}"));
     }
 
-    fn get_reg(&mut self, vreg: VReg) -> Option<usize> {
-        if let Some(reg) = self.vreg_map.get(&vreg) {
+    fn get_reg(&mut self, vreg: &VReg) -> Option<usize> {
+        if let Some(reg) = self.vreg_map.get(vreg) {
             return Some(*reg);
         }
 
         let reg = self.free_regs.iter().next().copied();
         if let Some(r) = reg {
             self.free_regs.remove(&r);
-            self.vreg_map.insert(vreg, r);
+            self.vreg_map.insert(*vreg, r);
         }
         reg
     }
