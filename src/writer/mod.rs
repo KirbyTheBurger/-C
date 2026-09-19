@@ -98,8 +98,8 @@ impl Writer {
         let left = self.get_reg(left).expect("no free regs");
         let right = self.get_reg(right).expect("no free regs");
 
-        self.write(format!("{mnemonic} r{left}, r{right}"));
         self.write(format!("LD r{dest}, r{left}"));
+        self.write(format!("{mnemonic} r{dest}, r{right}"));
     }
 
     fn get_reg(&mut self, vreg: &VReg) -> Option<usize> {
