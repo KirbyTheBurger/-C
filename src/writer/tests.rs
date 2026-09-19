@@ -12,10 +12,10 @@ mod tests {
         let mut writer = Writer::new(instrs);
         let output = writer.process();
 
-        assert_eq!(output, "LD r0, 42\nOUT r0\n");
+        assert_eq!(output, "LD r7, 16384\nLD r0, 42\nOUT r0\n");
     }
 
-        #[test]
+    #[test]
     fn test_double_print() {
         let instrs = vec![
             Instr::LoadImm(0, 1),
@@ -27,7 +27,7 @@ mod tests {
         let mut writer = Writer::new(instrs);
         let output = writer.process();
 
-        assert_eq!(output, "LD r0, 1\nOUT r0\nLD r0, 2\nOUT r0\n");
+        assert_eq!(output, "LD r7, 16384\nLD r0, 1\nOUT r0\nLD r0, 2\nOUT r0\n");
     }
 
     #[test]
@@ -44,7 +44,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 1\nLD r1, 2\nADD r0, r1\nLD r2, r0\nOUT r2\n"
+            "LD r7, 16384\nLD r0, 1\nLD r1, 2\nLD r2, r0\nADD r2, r1\nOUT r2\n"
         );
     }
 
@@ -62,7 +62,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 5\nLD r1, 3\nSUB r0, r1\nLD r2, r0\nOUT r2\n"
+            "LD r7, 16384\nLD r0, 5\nLD r1, 3\nLD r2, r0\nSUB r2, r1\nOUT r2\n"
         );
     }
 
@@ -80,7 +80,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 4\nLD r1, 6\nMUL r0, r1\nLD r2, r0\nOUT r2\n"
+            "LD r7, 16384\nLD r0, 4\nLD r1, 6\nLD r2, r0\nMUL r2, r1\nOUT r2\n"
         );
     }
 
@@ -98,7 +98,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 8\nLD r1, 2\nDIV r0, r1\nLD r2, r0\nOUT r2\n"
+            "LD r7, 16384\nLD r0, 8\nLD r1, 2\nLD r2, r0\nDIV r2, r1\nOUT r2\n"
         );
     }
 
@@ -118,7 +118,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 1\nLD r1, 2\nLD r2, 3\nMUL r1, r2\nLD r3, r1\nADD r0, r3\nLD r1, r0\nOUT r1\n"
+            "LD r7, 16384\nLD r0, 1\nLD r1, 2\nLD r2, 3\nLD r3, r1\nMUL r3, r2\nLD r4, r0\nADD r4, r3\nOUT r4\n"
         );
     }
 
@@ -138,7 +138,52 @@ mod tests {
 
         assert_eq!(
             output,
-            "LD r0, 1\nLD r1, 2\nADD r0, r1\nLD r2, r0\nLD r0, 3\nMUL r2, r0\nLD r1, r2\nOUT r1\n"
+            "LD r7, 16384\nLD r0, 1\nLD r1, 2\nLD r2, r0\nADD r2, r1\nLD r3, 3\nLD r4, r2\nMUL r4, r3\nOUT r4\n"
+        );
+    }
+
+    #[test]
+    fn test_spill_and_reload() {
+        let instrs = vec![
+            Instr::LoadImm(0, 10),
+            Instr::LoadImm(1, 11),
+            Instr::LoadImm(2, 12),
+            Instr::LoadImm(3, 13),
+            Instr::LoadImm(4, 14),
+            Instr::LoadImm(5, 15),
+            Instr::LoadImm(6, 16),
+            // all 7 usable registers (r0-r6) are now occupied by vregs 0-6;
+            // this forces eviction of the least-recently-used one (vreg 0, in r0)
+            Instr::LoadImm(7, 17),
+            // vreg 0 was spilled — reading it now forces a reload,
+            // which itself evicts vreg 1 (now the least-recently-used)
+            Instr::Print(0),
+        ];
+
+        let mut writer = Writer::new(instrs);
+        let output = writer.process();
+
+        assert_eq!(
+            output,
+            "LD r7, 16384\n\
+            LD r0, 10\n\
+            LD r1, 11\n\
+            LD r2, 12\n\
+            LD r3, 13\n\
+            LD r4, 14\n\
+            LD r5, 15\n\
+            LD r6, 16\n\
+            ADD r7, 0\n\
+            ST [r7], r0\n\
+            SUB r7, 0\n\
+            LD r0, 17\n\
+            ADD r7, 1\n\
+            ST [r7], r1\n\
+            SUB r7, 1\n\
+            ADD r7, 0\n\
+            LD r1, [r7]\n\
+            SUB r7, 0\n\
+            OUT r1\n"
         );
     }
 }
