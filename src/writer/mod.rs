@@ -70,8 +70,6 @@ impl Writer {
 
         self.write(format!("{mnemonic} r{left}, r{right}"));
         self.write(format!("LD r{dest}, r{left}"));
-        self.free_reg(left);
-        self.free_reg(right);
     }
 
     fn get_reg(&mut self, vreg: VReg) -> Option<usize> {
