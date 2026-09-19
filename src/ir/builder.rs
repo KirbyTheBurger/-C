@@ -82,6 +82,7 @@ impl IRBuilder {
         let zero = self.get_reg(); out.push(Instr::LoadImm(zero, 0));
         let one  = self.get_reg(); out.push(Instr::LoadImm(one, 1));
         let ten  = self.get_reg(); out.push(Instr::LoadImm(ten, 10));
+        let ascii_zero = self.get_reg(); out.push(Instr::LoadImm(ascii_zero, 48));
 
         let cur = self.get_reg(); out.push(Instr::Mov(cur, value));
         let count = self.get_reg(); out.push(Instr::LoadImm(count, 0));
@@ -127,6 +128,7 @@ impl IRBuilder {
 
         let d = self.get_reg();
         out.push(Instr::Pop(d));
+        out.push(Instr::Add { left: d, right: ascii_zero, dest: d });
         out.push(Instr::Print(d));
 
         let dc = self.get_reg();
@@ -140,6 +142,7 @@ impl IRBuilder {
         out.push(Instr::Drop(zero));
         out.push(Instr::Drop(one));
         out.push(Instr::Drop(ten));
+        out.push(Instr::Drop(ascii_zero));
         out.push(Instr::Drop(cur));
         out.push(Instr::Drop(count));
 
