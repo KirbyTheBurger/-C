@@ -85,6 +85,8 @@ impl IRBuilder {
         let ascii_zero = self.get_reg(); out.push(Instr::LoadImm(ascii_zero, 48));
 
         let cur = self.get_reg(); out.push(Instr::Mov(cur, value));
+        out.push(Instr::Drop(value));
+        
         let count = self.get_reg(); out.push(Instr::LoadImm(count, 0));
 
         let push_loop = self.new_label("dec_push");
