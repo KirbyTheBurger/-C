@@ -5,6 +5,8 @@ pub type VReg = usize;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Instr {
+    Drop(VReg),
+
     LoadImm(VReg, u16),
     Mov(VReg, VReg),
 

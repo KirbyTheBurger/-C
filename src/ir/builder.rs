@@ -133,6 +133,12 @@ impl IRBuilder {
         out.push(Instr::Jmp(pop_loop));
         out.push(Instr::Label(pop_done));
 
+        out.push(Instr::Drop(zero));
+        out.push(Instr::Drop(one));
+        out.push(Instr::Drop(ten));
+        out.push(Instr::Drop(cur));
+        out.push(Instr::Drop(count));
+
         out
     }
 
@@ -157,7 +163,10 @@ impl IRBuilder {
             _ => panic!("unexpected token"),
         }];
 
-        left_ir.into_iter().chain(right_ir).chain(op_ir).collect()
+        left_ir.into_iter().chain(right_ir).chain(op_ir).chain(vec![
+            Instr::Drop(left_reg),
+            Instr::Drop(right_reg),
+        ]).collect()
     }
 
     fn advance(&mut self) {
